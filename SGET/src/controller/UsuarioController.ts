@@ -33,6 +33,7 @@ export class UsuarioController {
 
         // - 200  Succcess (Sucesso - o cliente conseguiu se comunicar com o servidor.)
 
+        // - 201  Succcess (Sucesso - o cliente conseguiu se criar algo no servidor.)
 
 
         // Request e response - sempre em JSON, é o padrão de comunicação de dados entre servidor e cliente
@@ -47,40 +48,71 @@ export class UsuarioController {
     }
 
     //método usado para criar um novo registro de usuário no banco de dados
-    async save(request: Request, response: Response, next: NextFunction) {
-        const { nome, matricula, senha, datacriacao, situacao, criadopor } = request.body;
+    async cadastrarUsuario(request: Request, response: Response, next: NextFunction) {
+        try{
+            const { nome, matricula, senha, criadopor } = request.body;
 
-        // Gerar um UUID para o novo usuário
-        const id = uuidv4();
+            //senha deve ter no minimo 8 caracteres
+            if(senha.length < 8){
+                return response.status(400).send({
+                    message: 'A senha deve conter no mínimo 8 caracteres',
+                    status: 400
+                 });
+            }
 
-        // Criptografar a senha antes de salvá-la no banco de dados
-        const hashedPassword = await bcrypt.hash(senha, 10);
+            //não pode haver outro usuário com a mesma matrícula
+            var usuarioDatabase = await this.userRepository.findOneBy({
+                matricula: matricula
+            });
 
-        const user = this.userRepository.create({
-            id,
-            nome,
-            matricula,
-            senha: hashedPassword,
-            datacriacao,
-            situacao,
-            criadopor
-        });
+            if(usuarioDatabase){
+                return response.status(400).send({
+                    message: 'Já existe um usuário com esta matrícula!',
+                    status: 400
+                 });
+            }
+            
+            // Criptografar a senha antes de salvá-la no banco de dados
+            const hashedPassword = await bcrypt.hash(senha, 10);
 
-        await this.userRepository.save(user);
-        return "Usuário criado com sucesso";
+            const usuario =  this.userRepository.create({
+                nome,
+                matricula,
+                senha: hashedPassword,
+                datacriacao: new Date(),
+                situacao: true,
+                criadopor
+            });
+
+            await this.userRepository.save(usuario);
+            
+            return response.status(201).send({
+                message: 'Usuário criado com sucesso.',
+                status: 201
+             });
+        } 
+        catch (error) {
+            return response.status(500).send({
+                message: 'Erro ao criar usuário, tente novamente mais tarde.',
+                status: 500
+             });
+        }
     }
+    
 
     //excluir um registro de usuário com base no ID fornecido como parâmetro de rota.
-    async remove(request: Request, response: Response, next: NextFunction) {
-        const id = request.params.id; // UUID como chave primária
+    async removerUsuario(request: Request, response: Response, next: NextFunction) {
+        const id = request.params.id;
 
-        const userToRemove = await this.userRepository.findOne(id);
+        const usuario = await this.userRepository.findOneBy({
+        id: id
+        });
 
-        if (!userToRemove) {
+        if (!usuario) {
             return "Este usuário não existe";
         }
 
-        await this.userRepository.remove(userToRemove);
+        await this.userRepository.remove(usuario);
 
         return "Usuário foi removido";
     }

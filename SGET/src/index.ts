@@ -5,6 +5,7 @@ import { AppDataSource } from "./data-source"
 import { Routes } from "./routes"
 import { Usuarios } from "./entity/Usuarios"
 
+
 AppDataSource.initialize().then(async () => {
 
     // create express app
@@ -30,9 +31,12 @@ AppDataSource.initialize().then(async () => {
     // start express server
     app.listen(3000)
 
-
     console.log("Express server has started on port 3000. Open http://localhost:3000/usuarios to see results")
 
 }).catch(error => console.log(error))
 
+
+function cadastrarUsuario(novoUsuario: Usuarios) {
+    throw new Error("Function not implemented.")
+}
 

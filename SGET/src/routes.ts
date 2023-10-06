@@ -13,17 +13,17 @@ export const Routes = [{
     action: "todosUsuarios"
 }, {
     method: "get",
-    route: "/users/:id",
+    route: "/usuario/:id",
     controller: UsuarioController,
     action: "buscarUsuario"
 }, {
     method: "post",
-    route: "/users",
+    route: "/cadastro-usuario",
     controller: UsuarioController,
-    action: "save"
+    action: "cadastrarUsuario"
 }, {
     method: "delete",
-    route: "/users/:id",
+    route: "/remover-usuario/:id",
     controller: UsuarioController,
-    action: "remove"
+    action: "removerUsuario"
 }]
