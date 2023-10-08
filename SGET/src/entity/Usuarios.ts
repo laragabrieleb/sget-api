@@ -26,3 +26,12 @@ export class Usuarios {
     @Column("varchar", { length: 20 })
     criadopor: string
 }
+
+export function senhaEhValida(senha: string): boolean {
+    if (senha.length < 8) {
+        return false;
+    } else {
+        return true;
+    }
+}
+

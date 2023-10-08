@@ -1,6 +1,6 @@
 import { AppDataSource } from "../data-source"
 import { NextFunction, Request, Response } from "express"
-import { Usuarios } from "../entity/Usuarios"
+import { Usuarios, senhaEhValida } from "../entity/Usuarios"
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 
@@ -40,12 +40,61 @@ export class UsuarioController {
         
         if (!user) {
             return response.status(400).send({
-                message: 'Usuário não encontrado.',
+                mensagem: 'Usuário não encontrado.',
                 status: 400
              });
         }
         return user;
     }
+
+    //método usado para validar login de usuário
+    //matrícula e senha 
+    async loginUsuario(request: Request, response: Response, next: NextFunction){
+        try{
+            const { matricula, senha } = request.body; //recebendo
+
+            // verificar se matricula e senha foram fornecidos
+            if (!matricula || !senha) {
+                return response.status(400).json({
+                     mensagem: 'Matrícula e senha são obrigatórios.',
+                     status: 400
+                    });
+             }
+
+            // Procure um usuário com base na matrícula recebida
+            const usuario = await this.userRepository.findOne({ where: { matricula } });
+
+            if (!usuario) {
+                return response.status(401).json({
+                     mensagem: 'Usuário não encontrado.' ,
+                     status: 401
+                    });
+              }
+
+            //comparar a senha recebida com a senha do banco correspondente ao usuário
+            const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
+
+            if (!senhaCorreta) {
+                return response.status(401).json({
+                     mensagem: 'Senha incorreta.' ,
+                     status: 401
+                    });
+              }
+
+            return response.status(200).json({ 
+                mensagem: 'Login bem-sucedido.',
+                usuario: usuario
+            });
+        }
+        catch{
+                return response.status(500).send({
+                mensagem: 'Erro ao tentar logar, tente novamente mais tarde.',
+                status: 500
+                 });
+        }
+    }
+        
+    
 
     //método usado para criar um novo registro de usuário no banco de dados
     async cadastrarUsuario(request: Request, response: Response, next: NextFunction) {
@@ -53,9 +102,9 @@ export class UsuarioController {
             const { nome, matricula, senha, criadopor } = request.body;
 
             //senha deve ter no minimo 8 caracteres
-            if(senha.length < 8){
+            if(!senhaEhValida(senha)){
                 return response.status(400).send({
-                    message: 'A senha deve conter no mínimo 8 caracteres',
+                    mensagem: 'A senha deve conter no mínimo 8 caracteres',
                     status: 400
                  });
             }
@@ -67,7 +116,7 @@ export class UsuarioController {
 
             if(usuarioDatabase){
                 return response.status(400).send({
-                    message: 'Já existe um usuário com esta matrícula!',
+                    mensagem: 'Já existe um usuário com esta matrícula!',
                     status: 400
                  });
             }
@@ -85,15 +134,15 @@ export class UsuarioController {
             });
 
             await this.userRepository.save(usuario);
-            
+
             return response.status(201).send({
-                message: 'Usuário criado com sucesso.',
+                mensagem: 'Usuário criado com sucesso.',
                 status: 201
              });
         } 
         catch (error) {
             return response.status(500).send({
-                message: 'Erro ao criar usuário, tente novamente mais tarde.',
+                mensagem: 'Erro ao criar usuário, tente novamente mais tarde.',
                 status: 500
              });
         }

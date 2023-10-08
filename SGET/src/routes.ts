@@ -11,19 +11,28 @@ export const Routes = [{
     controller: UsuarioController,
     //método que o servidor vai executar para gerar a resposta ao cliente
     action: "todosUsuarios"
-}, {
+}, 
+{
     method: "get",
     route: "/usuario/:id",
     controller: UsuarioController,
     action: "buscarUsuario"
-}, {
+}, 
+{
     method: "post",
-    route: "/cadastro-usuario",
+    route: "/usuario/cadastro-usuario",
     controller: UsuarioController,
     action: "cadastrarUsuario"
-}, {
+}, 
+{
     method: "delete",
-    route: "/remover-usuario/:id",
+    route: "/usuario/remover-usuario/:id",
     controller: UsuarioController,
     action: "removerUsuario"
+},
+{
+    method: "post",
+    route: "/usuario/login",
+    controller: UsuarioController,
+    action: "loginUsuario"
 }]
