@@ -39,6 +39,7 @@ export class UsuarioController {
         // Request e response - sempre em JSON, é o padrão de comunicação de dados entre servidor e cliente
         
         if (!user) {
+
             return response.status(400).send({
                 mensagem: 'Usuário não encontrado.',
                 status: 400
@@ -51,11 +52,13 @@ export class UsuarioController {
     //matrícula e senha 
     async loginUsuario(request: Request, response: Response, next: NextFunction){
         try{
+            console.log(request.body);
+
             const { matricula, senha } = request.body; //recebendo
 
             // verificar se matricula e senha foram fornecidos
             if (!matricula || !senha) {
-                return response.status(400).json({
+                return response.status(400).send({
                      mensagem: 'Matrícula e senha são obrigatórios.',
                      status: 400
                     });
@@ -65,7 +68,8 @@ export class UsuarioController {
             const usuario = await this.userRepository.findOne({ where: { matricula } });
 
             if (!usuario) {
-                return response.status(401).json({
+                console.log('usuario nao encontrado')
+                return response.status(401).send({
                      mensagem: 'Usuário não encontrado.' ,
                      status: 401
                     });
@@ -75,18 +79,21 @@ export class UsuarioController {
             const senhaCorreta = await bcrypt.compare(senha, usuario.senha);
 
             if (!senhaCorreta) {
-                return response.status(401).json({
+                return response.status(401).send({
                      mensagem: 'Senha incorreta.' ,
                      status: 401
                     });
               }
 
-            return response.status(200).json({ 
+            return response.status(200).send({ 
                 mensagem: 'Login bem-sucedido.',
-                usuario: usuario
+                usuario: usuario,
+                status: 200
             });
         }
-        catch{
+        catch (error) {
+            console.error('Erro ao logar:', error);
+
                 return response.status(500).send({
                 mensagem: 'Erro ao tentar logar, tente novamente mais tarde.',
                 status: 500
