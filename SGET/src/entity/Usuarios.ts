@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, PrimaryColumn } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, PrimaryColumn, OneToMany, JoinColumn } from "typeorm"
+import { usuarioPermissoes } from "./UsuariosPermissoes"
 
 //representa a tabela usuarios no banco de dados
 @Entity("usuarios")
@@ -25,6 +26,9 @@ export class Usuarios {
 
     @Column("varchar", { length: 20 })
     criadopor: string
+
+    @OneToMany(() => usuarioPermissoes, (usuarioPermissao) => usuarioPermissao.usuario)
+    usuarioPermissoes: usuarioPermissoes[];
 }
 
 export function senhaEhValida(senha: string): boolean {

@@ -1,12 +1,15 @@
 import { AppDataSource } from "../data-source"
 import { NextFunction, Request, Response } from "express"
 import { Usuarios, senhaEhValida } from "../entity/Usuarios"
-import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
+import { usuarioPermissoes } from "../entity/UsuariosPermissoes";
+import { Permissoes } from "../entity/Permissoes";
 
 export class UsuarioController {
 
     private userRepository = AppDataSource.getRepository(Usuarios);
+    private permissaoRepository = AppDataSource.getRepository(Permissoes);
+    private usuarioPermissaoRepository = AppDataSource.getRepository(usuarioPermissoes);
 
     //buscar todos os registros dentro do repositório
     async todosUsuarios(request: Request, response: Response, next: NextFunction) {
@@ -106,7 +109,7 @@ export class UsuarioController {
     //método usado para criar um novo registro de usuário no banco de dados
     async cadastrarUsuario(request: Request, response: Response, next: NextFunction) {
         try{
-            const { nome, matricula, senha, criadopor } = request.body;
+            const { nome, matricula, senha, criadopor, permissoes } = request.body;
 
             //senha deve ter no minimo 8 caracteres
             if(!senhaEhValida(senha)){
@@ -131,16 +134,45 @@ export class UsuarioController {
             // Criptografar a senha antes de salvá-la no banco de dados
             const hashedPassword = await bcrypt.hash(senha, 10);
 
+            //crio o usuário
             const usuario =  this.userRepository.create({
                 nome,
                 matricula,
                 senha: hashedPassword,
                 datacriacao: new Date(),
                 situacao: true,
-                criadopor
+                criadopor: criadopor,
             });
 
+            //crio um array vazio de usuarioPermissoes
+            let usuarioPermissoes: usuarioPermissoes[] = [];
+
+            //para cada permissao enviada pelo front
+            permissoes.forEach(async idPermissao => {
+
+                //busco a permissao no banco de dados (tabela Permissoes) através do Id
+                var permissaoDatabase = await this.permissaoRepository.findOneBy({
+                    id: idPermissao
+                });
+
+                //adiciono no array vazio de usuarioPermissoes, um novo item
+                //informando o usuário que estou cadastrando
+                //e a permissão selecionada no front
+                usuarioPermissoes.push({
+                    usuario: usuario,
+                    permissao: permissaoDatabase as Permissoes
+                })
+            });
+
+            //salvando o usuário no banco de dados
             await this.userRepository.save(usuario);
+
+            //inserindo as permissoes do usuário no banco de dados
+            //através do array que foi preenchido no loop
+            const usuarioPermissoesDatabase = this.usuarioPermissaoRepository.create(usuarioPermissoes);
+
+            //salvando as permissões do usuário no banco de dados
+            await this.usuarioPermissaoRepository.save(usuarioPermissoesDatabase)
 
             return response.status(201).send({
                 mensagem: 'Usuário criado com sucesso.',
@@ -158,18 +190,33 @@ export class UsuarioController {
 
     //excluir um registro de usuário com base no ID fornecido como parâmetro de rota.
     async removerUsuario(request: Request, response: Response, next: NextFunction) {
-        const id = request.params.id;
+        try{
+            const id = request.params.id;
 
-        const usuario = await this.userRepository.findOneBy({
-        id: id
-        });
+            const usuario = await this.userRepository.findOneBy({
+            id: id
+            })
 
-        if (!usuario) {
-            return "Este usuário não existe";
+            if (!usuario) {
+                return response.status(400).send({
+                    mensagem: 'Usuário inexistente!',
+                    status: 400
+                 });
+            }
+
+            await this.userRepository.remove(usuario);
+
+            return response.status(201).send({
+                mensagem: "Usuário foi removido",
+                status: 201
+             });
         }
+        catch (error){
+            return response.status(500).send({
+                mensagem: 'Erro ao remover usuário, tente novamente mais tarde.',
+                status: 500
+            });
+        };
 
-        await this.userRepository.remove(usuario);
-
-        return "Usuário foi removido";
     }
 }

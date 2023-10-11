@@ -1,6 +1,6 @@
-import { UsuarioController } from "./controller/UsuarioController"
+import { UsuarioController } from "../controller/UsuarioController"
 
-export const Routes = [{
+export const routesUsuarios = [{
     //DEFINE as rotas que o cliente pode requisitar ao servidor.
 
     //tipo de requisicao (GET, POST, PUT, DELETE)
