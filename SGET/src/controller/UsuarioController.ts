@@ -109,7 +109,7 @@ export class UsuarioController {
     //método usado para criar um novo registro de usuário no banco de dados
     async cadastrarUsuario(request: Request, response: Response, next: NextFunction) {
         try{
-            const { nome, matricula, senha, criadopor, permissoes } = request.body;
+            const { nome, matricula, senha, criadoPor, permissoes } = request.body;
 
             //senha deve ter no minimo 8 caracteres
             if(!senhaEhValida(senha)){
@@ -141,7 +141,7 @@ export class UsuarioController {
                 senha: hashedPassword,
                 datacriacao: new Date(),
                 situacao: true,
-                criadopor: criadopor,
+                criadopor: criadoPor,
             });
 
             //crio um array vazio de usuarioPermissoes
@@ -174,9 +174,9 @@ export class UsuarioController {
             //salvando as permissões do usuário no banco de dados
             await this.usuarioPermissaoRepository.save(usuarioPermissoesDatabase)
 
-            return response.status(201).send({
+            return response.status(200).send({
                 mensagem: 'Usuário criado com sucesso.',
-                status: 201
+                status: 200
              });
         } 
         catch (error) {
@@ -206,9 +206,9 @@ export class UsuarioController {
 
             await this.userRepository.remove(usuario);
 
-            return response.status(201).send({
+            return response.status(200).send({
                 mensagem: "Usuário foi removido",
-                status: 201
+                status: 200
              });
         }
         catch (error){

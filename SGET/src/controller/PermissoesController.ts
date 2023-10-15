@@ -10,7 +10,13 @@ export class PermissoesController {
     //criar as permissoes
 
     async listarPermissoes(request: Request, response: Response, next: NextFunction) {
-        return this.permissoesRepository.find();
+        let permissoes = await this.permissoesRepository.find();
+
+        return response.status(200).send({
+            mensagem: 'Permissões obtidas com sucesso.',
+            status: 200,
+            permissoes: permissoes
+         });
     }
 
     async criarPermissoes(request: Request, response: Response, next: NextFunction) {
