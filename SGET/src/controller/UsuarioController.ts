@@ -12,18 +12,27 @@ export class UsuarioController {
     private usuarioPermissaoRepository = AppDataSource.getRepository(usuarioPermissoes);
 
     //buscar todos os registros dentro do repositório
-    async todosUsuarios(request: Request, response: Response, next: NextFunction) {
-        return this.userRepository.find();
+    async listarUsuarios(request: Request, response: Response, next: NextFunction) {
+        let usuarios = await this.userRepository.find();
+
+        return response.status(200).send({
+            mensagem: 'Usuários encontrados com sucesso.',
+            status: 200,
+            usuarios: usuarios
+         });
     }
 
     //buscar um único registro de usuário com base no ID fornecido como parâmetro de rota
     async buscarUsuario(request: Request, response: Response, next: NextFunction) {
-        const idusuario = request.params.id; 
+        const idusuario = request.query.id; 
 
-        const user = await this.userRepository.findOneBy({
-        id: idusuario
-        });
+        console.log(idusuario);
+        const usuario = await this.userRepository.createQueryBuilder('usuario')
+        .leftJoinAndSelect('usuario.usuarioPermissoes', 'usuarioPermissoes') // 'permissoes' deve corresponder ao nome do relacionamento
+        .where('usuario.id = :id', { id: idusuario })
+        .getOne();
 
+        console.log(usuario)
         //Status
         // - 400 BadRequest (Requisição mal sucedida - houve algum erro do lado do cliente, como dados
         // mal preenchidos ou nulos)
@@ -41,14 +50,18 @@ export class UsuarioController {
 
         // Request e response - sempre em JSON, é o padrão de comunicação de dados entre servidor e cliente
         
-        if (!user) {
+        if (!usuario) {
 
             return response.status(400).send({
                 mensagem: 'Usuário não encontrado.',
                 status: 400
              });
         }
-        return user;
+        return response.status(200).send({
+            mensagem: 'Usuários encontrados com sucesso.',
+            status: 200,
+            usuario: usuario
+         });
     }
 
     //método usado para validar login de usuário
@@ -182,6 +195,77 @@ export class UsuarioController {
         catch (error) {
             return response.status(500).send({
                 mensagem: 'Erro ao criar usuário, tente novamente mais tarde.',
+                status: 500
+             });
+        }
+    }
+    
+    //mudar o status do usuário
+    async statusUsuario(request: Request, response: Response, next: NextFunction) {
+        try{
+
+            const { idUsuario } = request.body;
+            const usuario = await this.userRepository.findOneBy({
+                id: idUsuario
+            });
+
+            if (!usuario) {
+                return response.status(400).send({
+                    mensagem: 'Usuário inexistente!',
+                    status: 400
+                });
+            }
+
+            usuario.situacao = !usuario.situacao; //troca de situação
+
+            
+            await this.userRepository.save(usuario);
+
+            return response.status(200).send({
+                mensagem: 'Status do usuário atualizado com sucesso!',
+                status: 200
+            });
+
+        }
+        catch (error) {
+            return response.status(500).send({
+                mensagem: 'Erro ao alterar o status do usuário, tente novamente mais tarde.',
+                status: 500
+             });
+        }
+    }
+
+
+    //editar usuário
+    //pegar usuário já existente e poder modificar, busco pelo id
+    async editarUsuario(request: Request, response: Response, next: NextFunction) {
+        try {
+            const { nome, matricula, permissoes } = request.body;
+            const id = request.params.id; // ID do usuário a ser editado.
+    
+            // Recupere o usuário existente pelo ID
+            const usuario = await this.userRepository.findOne(id);
+    
+            if (!usuario) {
+                return response.status(400).send({
+                    mensagem: 'Usuário inexistente!',
+                    status: 400
+                });
+            }
+    
+            // Atualize as propriedades do usuário com os novos valores
+            usuario.nome = nome;
+            usuario.matricula = matricula;
+            usuario.usuarioPermissoes = permissoes;
+    
+            // Salve o usuário atualizado no banco de dados
+            await this.userRepository.save(usuario);
+    
+            // Resto do código de resposta aqui...
+    
+        } catch (error) {
+            return response.status(500).send({
+                mensagem: 'Erro ao editar usuário, tente novamente mais tarde.',
                 status: 500
              });
         }

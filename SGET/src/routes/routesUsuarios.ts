@@ -6,15 +6,15 @@ export const routesUsuarios = [{
     //tipo de requisicao (GET, POST, PUT, DELETE)
     method: "get",
     //rota informada na url pelo cliente
-    route: "/usuarios",
+    route: "/usuario/listar",
     //classe que o servidor deve procurar 
     controller: UsuarioController,
     //método que o servidor vai executar para gerar a resposta ao cliente
-    action: "todosUsuarios"
+    action: "listarUsuarios"
 }, 
 {
     method: "get",
-    route: "/usuario/:id",
+    route: "/usuario/obter",
     controller: UsuarioController,
     action: "buscarUsuario"
 }, 
@@ -35,4 +35,16 @@ export const routesUsuarios = [{
     route: "/usuario/login",
     controller: UsuarioController,
     action: "loginUsuario"
+},
+{
+    method: "post",
+    route: "/usuario/editar-usuario",
+    controller: UsuarioController,
+    action: "editarUsuario"
+},
+{
+    method: "post",
+    route: "/usuario/status",
+    controller: UsuarioController,
+    action: "statusUsuario"
 }]
