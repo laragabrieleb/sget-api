@@ -26,11 +26,11 @@ export class UsuarioController {
     async buscarUsuario(request: Request, response: Response, next: NextFunction) {
         const idusuario = request.query.id; 
 
-        console.log(idusuario);
-        const usuario = await this.userRepository.createQueryBuilder('usuario')
-        .leftJoinAndSelect('usuario.usuarioPermissoes', 'usuarioPermissoes') // 'permissoes' deve corresponder ao nome do relacionamento
-        .where('usuario.id = :id', { id: idusuario })
-        .getOne();
+        const usuario = await this.userRepository
+                .createQueryBuilder('usuario')
+                .leftJoinAndSelect('usuario.usuarioPermissoes', 'usuarioPermissoes')
+                .where('usuario.id = :id', { id: idusuario })
+                .getOne();
 
         console.log(usuario)
         //Status
@@ -240,11 +240,12 @@ export class UsuarioController {
     //pegar usuário já existente e poder modificar, busco pelo id
     async editarUsuario(request: Request, response: Response, next: NextFunction) {
         try {
-            const { nome, matricula, permissoes } = request.body;
-            const id = request.params.id; // ID do usuário a ser editado.
-    
-            // Recupere o usuário existente pelo ID
-            const usuario = await this.userRepository.findOne(id);
+            //usuarioPermissoes é um array de id
+            const { idUsuario, nome, matricula, usuarioPermissoes } = request.body;
+
+            const usuario = await this.userRepository.findOneBy({
+                id: idUsuario
+                })
     
             if (!usuario) {
                 return response.status(400).send({
@@ -256,12 +257,45 @@ export class UsuarioController {
             // Atualize as propriedades do usuário com os novos valores
             usuario.nome = nome;
             usuario.matricula = matricula;
-            usuario.usuarioPermissoes = permissoes;
-    
+            
+            //busco as permissões antigas do usuário (antes da edição)
+            const permissoesAntigas = await this.usuarioPermissaoRepository.findBy({
+                usuario: usuario
+                })
+
+            //caso ele tenha alguma permissão antes da edição, removo todas
+            if(permissoesAntigas.length > 0){
+                await this.usuarioPermissaoRepository.remove(permissoesAntigas);
+            }
+
+            let novasPermissoes : usuarioPermissoes[] = [];
+            
+            //para cada permissao selecionada
+            
+            await usuarioPermissoes.forEach(async idPermissaoSelecionada => {
+
+                //obter permissao selecionada no banco de dados
+                let permissaoDatabase = await this.permissaoRepository.findOneBy({
+                    id: idPermissaoSelecionada
+                })
+                //adiciono a permissao selecionada ao array
+                novasPermissoes.push({
+                    permissao: permissaoDatabase,
+                    usuario: usuario
+                });
+            });
             // Salve o usuário atualizado no banco de dados
             await this.userRepository.save(usuario);
+
+            let novasPermissoesDatabase = await this.usuarioPermissaoRepository.create(novasPermissoes);
+
+            await this.usuarioPermissaoRepository.save(novasPermissoesDatabase);
+
     
-            // Resto do código de resposta aqui...
+            return response.status(200).send({
+                mensagem: 'Usuário editado com sucesso!',
+                status: 200
+             });
     
         } catch (error) {
             return response.status(500).send({

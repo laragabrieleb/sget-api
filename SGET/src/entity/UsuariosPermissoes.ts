@@ -6,10 +6,14 @@ import { Permissoes } from "./Permissoes";
 export class usuarioPermissoes {
     //coluna como uma chave primária autoincrementável
     @PrimaryGeneratedColumn()
-    id?: number 
-
+    id?: number
     //colocar as fk (permissoes e usuarios)
     //manytoone: muitos para um 
+    @Column("int")
+    usuarioId?: number
+
+    @Column("int")
+    permissaoId?: number
     //@JoinColumn: coluna da chave 
     //@JoinTable() é usada para criar uma tabela de 
     //ligação automática no banco de dados que armazenará os relacionamentos entre

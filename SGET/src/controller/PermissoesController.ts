@@ -8,6 +8,7 @@ export class PermissoesController {
     //listar permissoes
     //excluir permissão de um usuário?
     //criar as permissoes
+    //filtrar permissão de acordo com o usuário
 
     async listarPermissoes(request: Request, response: Response, next: NextFunction) {
         let permissoes = await this.permissoesRepository.find();
@@ -37,7 +38,5 @@ export class PermissoesController {
                 console.error('Erro ao criar permissão:', error);
                 return response.status(500).json({ mensagem: 'Erro ao criar permissão.', status: 500 });
             }
-        
     }
-    
 }

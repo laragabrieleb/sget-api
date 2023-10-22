@@ -37,7 +37,7 @@ export const routesUsuarios = [{
     action: "loginUsuario"
 },
 {
-    method: "post",
+    method: "put",
     route: "/usuario/editar-usuario",
     controller: UsuarioController,
     action: "editarUsuario"
