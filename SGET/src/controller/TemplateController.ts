@@ -19,6 +19,41 @@ export class TemplateController {
          });
     }
 
+//mudar o status da template
+async AlterarStatus(request: Request, response: Response, next: NextFunction) {
+    try{
+
+        const { idTemplate } = request.body;
+        const template = await this.templatesRepository.findOneBy({
+            id: idTemplate
+        });
+
+        if (!template) {
+            return response.status(400).send({
+                mensagem: 'Template inexistente!',
+                status: 400
+            });
+        }
+
+        template.situacao = !template.situacao; //troca de situação
+
+        
+        await this.templatesRepository.save(template);
+
+        return response.status(200).send({
+            mensagem: 'Status do template atualizado com sucesso!',
+            status: 200
+        });
+
+    }
+    catch (error) {
+        return response.status(500).send({
+            mensagem: 'Erro ao alterar o status do template, tente novamente mais tarde.',
+            status: 500
+         });
+    }
+}
+
     async buscarTemplate(request: Request, response: Response, next: NextFunction){
         const idTemplate = request.query.id; 
         

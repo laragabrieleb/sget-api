@@ -21,11 +21,11 @@ export const routesTemplates = [{
     action: "criarTemplate"
 },
 {
-    method: "post",
-    route: "/template/status",
+    method: "put",
+    route: "/template/alterar-status",
     //classe que o servidor deve procurar 
     controller: TemplateController,
-    action: "statusTemplate"
+    action: "AlterarStatus"
 },
 {
     method: "put",
