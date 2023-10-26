@@ -18,6 +18,26 @@ export const routesTemplates = [{
     route: "/template/cadastrar",
     //classe que o servidor deve procurar 
     controller: TemplateController,
-    //método que o servidor vai executar para gerar a resposta ao cliente
     action: "criarTemplate"
-}]; 
+},
+{
+    method: "post",
+    route: "/template/status",
+    //classe que o servidor deve procurar 
+    controller: TemplateController,
+    action: "statusTemplate"
+},
+{
+    method: "put",
+    route: "/template/editar",
+    //classe que o servidor deve procurar 
+    controller: TemplateController,
+    action: "editarTemplate"
+},
+{
+    method: "get",
+    route: "/template/obter",
+    controller: TemplateController,
+    action: "buscarTemplate"
+}
+]; 

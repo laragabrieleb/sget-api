@@ -83,6 +83,7 @@ export class UsuarioController {
             // Procure um usuário com base na matrícula recebida
             const usuario = await this.userRepository.findOne({ where: { matricula } });
 
+            
             if (!usuario) {
                 console.log('usuario nao encontrado')
                 return response.status(401).send({
@@ -101,9 +102,27 @@ export class UsuarioController {
                     });
               }
 
+              //obter permissoes do usuário a partir da tabela usuarioPermissoes
+            const usuarioPermissoes = await this.usuarioPermissaoRepository
+              .createQueryBuilder('usuarioPermissoes')
+              .leftJoinAndSelect('usuarioPermissoes.permissao', 'permissao')
+              .where('usuarioPermissoes.usuarioId = :id', { id: usuario.id })
+              .getMany();
+
+            console.log(usuarioPermissoes);
+
+            let permissoes : Permissoes[] = [];
+
+            usuarioPermissoes.forEach(usuarioPermissao => {
+                permissoes.push(usuarioPermissao.permissao);
+            });
+
+            console.log(permissoes);
+            
             return response.status(200).send({ 
                 mensagem: 'Login bem-sucedido.',
                 usuario: usuario,
+                permissoes: permissoes,
                 status: 200
             });
         }
@@ -122,8 +141,8 @@ export class UsuarioController {
     //método usado para criar um novo registro de usuário no banco de dados
     async cadastrarUsuario(request: Request, response: Response, next: NextFunction) {
         try{
-            const { nome, matricula, senha, criadoPor, permissoes } = request.body;
-
+            const { nome, matricula, senha, criadopor, permissoes } = request.body;
+            console.log(request.body)
             //senha deve ter no minimo 8 caracteres
             if(!senhaEhValida(senha)){
                 return response.status(400).send({
@@ -154,9 +173,10 @@ export class UsuarioController {
                 senha: hashedPassword,
                 datacriacao: new Date(),
                 situacao: true,
-                criadopor: criadoPor,
+                criadopor: criadopor,
             });
 
+            console.log('usuario criado')
             //crio um array vazio de usuarioPermissoes
             let usuarioPermissoes: usuarioPermissoes[] = [];
 
@@ -167,7 +187,7 @@ export class UsuarioController {
                 var permissaoDatabase = await this.permissaoRepository.findOneBy({
                     id: idPermissao
                 });
-
+                console.log('permissao encontrada:', permissaoDatabase)
                 //adiciono no array vazio de usuarioPermissoes, um novo item
                 //informando o usuário que estou cadastrando
                 //e a permissão selecionada no front
@@ -179,7 +199,7 @@ export class UsuarioController {
 
             //salvando o usuário no banco de dados
             await this.userRepository.save(usuario);
-
+            console.log('usuario salvo')
             //inserindo as permissoes do usuário no banco de dados
             //através do array que foi preenchido no loop
             const usuarioPermissoesDatabase = this.usuarioPermissaoRepository.create(usuarioPermissoes);
@@ -193,6 +213,7 @@ export class UsuarioController {
              });
         } 
         catch (error) {
+            console.log(error);
             return response.status(500).send({
                 mensagem: 'Erro ao criar usuário, tente novamente mais tarde.',
                 status: 500
@@ -260,7 +281,7 @@ export class UsuarioController {
             
             //busco as permissões antigas do usuário (antes da edição)
             const permissoesAntigas = await this.usuarioPermissaoRepository.findBy({
-                usuario: usuario
+                usuarioId: idUsuario
                 })
 
             //caso ele tenha alguma permissão antes da edição, removo todas
