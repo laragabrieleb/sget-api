@@ -1,5 +1,5 @@
 import { AppDataSource } from "../data-source";
-import { Templates } from "../entity/Templates";
+import { Templates, descricaoTemplateEhValida, nomeTemplateEhValido } from "../entity/Templates";
 import { NextFunction, Request, Response } from "express"
 import { Usuarios } from "../entity/Usuarios";
 import { Colunas } from "../entity/Colunas";
@@ -19,9 +19,9 @@ export class TemplateController {
          });
     }
 
-//mudar o status da template
-async AlterarStatus(request: Request, response: Response, next: NextFunction) {
-    try{
+    //mudar o status da template
+    async AlterarStatus(request: Request, response: Response, next: NextFunction) {
+        try{
 
         const { idTemplate } = request.body;
         const template = await this.templatesRepository.findOneBy({
@@ -88,6 +88,20 @@ async AlterarStatus(request: Request, response: Response, next: NextFunction) {
                     return response.status(400).json({ mensagem: 'A descricao da template é obrigatório.', status: 400 });
                 }
 
+                if(!nomeTemplateEhValido(nome)){
+                    return response.status(400).send({
+                        mensagem: 'O nome do template deve conter no máximo 50 caracteres',
+                        status: 400
+                     });
+                }
+
+                if(!descricaoTemplateEhValida(descricao)){
+                    return response.status(400).send({
+                        mensagem: 'A descrição do template deve conter no máximo 100 caracteres',
+                        status: 400
+                     });
+                }
+
                 const usuario = await this.userRepository.findOneBy({
                     id: idUsuario
                     })
@@ -135,8 +149,30 @@ async AlterarStatus(request: Request, response: Response, next: NextFunction) {
                 let colunasDatabase = await this.colunasRepository.create(colunasNovas);
                 
                 await this.colunasRepository.save(colunasDatabase);
+                
+                let urlTemplate = '';
 
-                return response.status(201).json({ mensagem: 'Template criada com sucesso.', status: 201 });
+                const spawn = require('child_process').spawn;
+                const path = require('path');
+
+                const pythonScriptPath = path.join(__dirname, '../scripts/generate-template-file.py');
+
+                const script = spawn('python', [pythonScriptPath, JSON.stringify(colunasNovas), templateDatabase.nome, templateDatabase.extensao]);
+
+                script.stdout.on('data', (data) => {
+                  console.log(`stdout: ${data}`);
+                  urlTemplate = data.toString();
+                  return response.status(201).json({ mensagem: 'Template criada com sucesso.', status: 201, url: urlTemplate });
+                });
+
+                script.stderr.on('data', (data) => {
+                  console.log(`stderr: ${data}`);
+                  
+                });
+
+                script.on('close', (code) => {
+                  console.log(`child process exited with code ${code}`);
+                });
             } catch (error) {
                 console.error('Erro ao criar template:', error);
                 return response.status(500).json({ mensagem: 'Erro ao criar template.', status: 500 });
@@ -157,11 +193,27 @@ async AlterarStatus(request: Request, response: Response, next: NextFunction) {
                     status: 400
                 });
             }
+
+            
     
             templateDb.nome = template.nome;
             templateDb.descricao = template.descricao;
             templateDb.qtdColunas = template.qtdColunas;
             templateDb.extensao = template.extensao;
+
+            if(!nomeTemplateEhValido(template.nome)){
+                return response.status(400).send({
+                    mensagem: 'O nome do template deve conter no máximo 50 caracteres',
+                    status: 400
+                 });
+            }
+
+            if(!descricaoTemplateEhValida(template.descricao)){
+                return response.status(400).send({
+                    mensagem: 'A descrição do template deve conter no máximo 100 caracteres',
+                    status: 400
+                 });
+            }
 
             if(template.maxLinhas != undefined && template.maxLinhas != '')
                 templateDb.maxLinhas = template.maxLinhas;

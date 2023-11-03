@@ -51,3 +51,20 @@ export class Templates {
 }
 
 
+export function nomeTemplateEhValido(nome: string): boolean {
+    if (nome.length < 45) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+export function descricaoTemplateEhValida(descricao: string): boolean {
+    if (descricao.length < 100) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
