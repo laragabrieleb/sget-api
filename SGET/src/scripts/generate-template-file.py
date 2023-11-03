@@ -9,7 +9,7 @@ import sys
 jsonColunas = sys.argv[1]
 nomeTemplate = sys.argv[2]
 tipoTemplate = sys.argv[3]
-print(tipoTemplate)
+
 df = pd.DataFrame()
 
 colunas = json.loads(jsonColunas, object_hook=lambda d: SimpleNamespace(**d))
@@ -23,7 +23,7 @@ for coluna in colunas:
         'Moeda': 'float32',
         'Porcentagem': 'int32',
     }
-    print(coluna)
+    
     tipo = switch_dict.get(coluna.tipo, 'string')
         
     df[coluna.nome] = None
@@ -31,12 +31,13 @@ for coluna in colunas:
     
     if(tipoTemplate == 'csv'):
         df.to_csv(nomeArquivo, index=False)
-    else:
+    else: 
+        #xlsx ou xls (ainda preciso saber como faz pro xls)
         writer = pd.ExcelWriter(nomeArquivo, engine="auto")
         df.to_excel(writer, sheet_name="template", index=False) 
         writer._save()
         
-print("Excel file created successfully.")
+
     
 gauth = GoogleAuth()
 GoogleAuth.DEFAULT_SETTINGS['client_config_file'] = 'src/scripts/client_secrets.json'
@@ -47,8 +48,6 @@ file_drive = drive.CreateFile({'title': nomeArquivo})
 
 file_drive.SetContentFile(nomeArquivo)
 file_drive.Upload()
-
-print("Excel file uploaded to Google Drive.")
     
 file_url = file_drive['alternateLink']
     

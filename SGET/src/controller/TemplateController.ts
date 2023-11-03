@@ -152,26 +152,28 @@ export class TemplateController {
                 
                 let urlTemplate = '';
 
+                //conexão com o py
                 const spawn = require('child_process').spawn;
-                const path = require('path');
+                const path = require('path'); 
 
-                const pythonScriptPath = path.join(__dirname, '../scripts/generate-template-file.py');
+                const caminhoScript = path.join(__dirname, '../scripts/generate-template-file.py');
 
-                const script = spawn('python', [pythonScriptPath, JSON.stringify(colunasNovas), templateDatabase.nome, templateDatabase.extensao]);
+                const script = spawn('python', [caminhoScript, JSON.stringify(colunasNovas), templateDatabase.nome, templateDatabase.extensao]);
 
                 script.stdout.on('data', (data) => {
-                  console.log(`stdout: ${data}`);
+                  console.log(`url do arquivo: ${data}`);
                   urlTemplate = data.toString();
+                  //FAZER - armazenar url da template numa coluna Url na tabela template
                   return response.status(201).json({ mensagem: 'Template criada com sucesso.', status: 201, url: urlTemplate });
                 });
 
                 script.stderr.on('data', (data) => {
-                  console.log(`stderr: ${data}`);
-                  
+                  console.log(`erro: ${data}`);
+
                 });
 
                 script.on('close', (code) => {
-                  console.log(`child process exited with code ${code}`);
+                  console.log(`python finalizou com código:  ${code}`);
                 });
             } catch (error) {
                 console.error('Erro ao criar template:', error);
