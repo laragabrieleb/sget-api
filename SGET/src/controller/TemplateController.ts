@@ -122,6 +122,7 @@ export class TemplateController {
                 template.situacao = true;
                 template.extensao = extensao;
                 template.usuario = usuario;
+                
 
                 if(maxLinhas != undefined && maxLinhas != '')
                     template.maxLinhas = maxLinhas;
@@ -153,19 +154,38 @@ export class TemplateController {
                 let urlTemplate = '';
 
                 //conexão com o py
+                //import
                 const spawn = require('child_process').spawn;
                 const path = require('path'); 
 
+                //caminho para o script em py
                 const caminhoScript = path.join(__dirname, '../scripts/generate-template-file.py');
 
+                //spawn para iniciar um novo processo Python
                 const script = spawn('python', [caminhoScript, JSON.stringify(colunasNovas), templateDatabase.nome, templateDatabase.extensao]);
 
-                script.stdout.on('data', (data) => {
-                  console.log(`url do arquivo: ${data}`);
-                  urlTemplate = data.toString();
-                  //FAZER - armazenar url da template numa coluna Url na tabela template
-                  return response.status(201).json({ mensagem: 'Template criada com sucesso.', status: 201, url: urlTemplate });
-                });
+                //tratamento 
+                script.stdout.on('data', async (data) => {
+                    console.log(`url do arquivo: ${data}`);
+                    let text = data.toString();
+
+                    let lines = text.split('\r')
+                    let last_line = lines[lines.length - 2]
+
+                    // atualizar com a URL do arquivo
+                    templateDatabase.caminho = last_line;
+                  
+                    try {
+                      await this.templatesRepository.save(templateDatabase);
+                  
+                      return response.status(201).json({ mensagem: 'Template criada com sucesso.', status: 201, url: urlTemplate });
+                    } catch (error) {
+                      console.error('Erro ao salvar a URL do template:', error);
+                  
+                      // Retorne uma resposta de erro mais detalhada
+                      return response.status(500).json({ mensagem: 'Erro ao criar template: ' + error.message, status: 500 });
+                    }
+                  });
 
                 script.stderr.on('data', (data) => {
                   console.log(`erro: ${data}`);
@@ -195,13 +215,12 @@ export class TemplateController {
                     status: 400
                 });
             }
-
-            
     
             templateDb.nome = template.nome;
             templateDb.descricao = template.descricao;
             templateDb.qtdColunas = template.qtdColunas;
             templateDb.extensao = template.extensao;
+            templateDb.caminho = template.caminho;
 
             if(!nomeTemplateEhValido(template.nome)){
                 return response.status(400).send({
@@ -257,6 +276,7 @@ export class TemplateController {
                  mensagem: 'Template editada com sucesso.', 
                  status: 201 
                 });
+        
 
         } catch (error) {
             console.error('Erro ao editar template:', error);
@@ -264,6 +284,32 @@ export class TemplateController {
                  mensagem: 'Erro ao editar template.', 
                  status: 500 
                 });
+        }  
+    }
+
+    async listarTemplatesUsuario(request: Request, response: Response, next: NextFunction){
+        //pegar id do usuário logado
+        //vem pela url quando é get = em obter template
+        const idUsuario = request.query.id;
+
+        const templatesDoUsuario = await this.templatesRepository.find({
+            where: {
+              usuarioId: idUsuario,
+            },
+          });
+
+          return response.status(200).json({
+            mensagem: 'Templates encontradas com sucesso.', 
+            templatesDoUsuario: templatesDoUsuario,
+
+            status: 200 
+           });
+   
+        } catch (error) {
+        
+            console.error('Erro ao editar template:', error);
         }
+
+       
 }
-}
+    

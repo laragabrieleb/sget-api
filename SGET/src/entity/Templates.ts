@@ -39,6 +39,9 @@ export class Templates {
     @Column("timestamp")
     datacriacao: Date
 
+    @Column("varchar", { length: 500, nullable: true })
+    caminho: string
+
     @Column("int")
     usuarioId?: number
 

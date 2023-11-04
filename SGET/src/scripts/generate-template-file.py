@@ -14,7 +14,7 @@ df = pd.DataFrame()
 
 colunas = json.loads(jsonColunas, object_hook=lambda d: SimpleNamespace(**d))
 
-nomeArquivo = nomeTemplate + '.' + tipoTemplate
+nomeArquivo = nomeTemplate + '.' + tipoTemplate.lower()
 
 for coluna in colunas:
     switch_dict = {
@@ -29,15 +29,12 @@ for coluna in colunas:
     df[coluna.nome] = None
     df[coluna.nome].astype(tipo)
     
-    if(tipoTemplate == 'csv'):
-        df.to_csv(nomeArquivo, index=False)
-    else: 
-        #xlsx ou xls (ainda preciso saber como faz pro xls)
-        writer = pd.ExcelWriter(nomeArquivo, engine="auto")
-        df.to_excel(writer, sheet_name="template", index=False) 
-        writer._save()
-        
-
+    if(tipoTemplate.lower() == 'csv'):
+        df.to_csv(nomeArquivo, sep=';', index=False)
+    else:
+        df.to_excel(nomeArquivo)
+    #CSV E XLSX - OK
+    # FALTA XLS
     
 gauth = GoogleAuth()
 GoogleAuth.DEFAULT_SETTINGS['client_config_file'] = 'src/scripts/client_secrets.json'
@@ -49,7 +46,7 @@ file_drive = drive.CreateFile({'title': nomeArquivo})
 file_drive.SetContentFile(nomeArquivo)
 file_drive.Upload()
     
-file_url = file_drive['alternateLink']
+file_url = file_drive['webContentLink']
     
 print(file_url)
 

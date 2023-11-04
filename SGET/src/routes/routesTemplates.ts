@@ -39,5 +39,18 @@ export const routesTemplates = [{
     route: "/template/obter",
     controller: TemplateController,
     action: "buscarTemplate"
+},
+{
+    method: "get",
+    route: "/template/obter-templates-usuario",
+    controller: TemplateController,
+    action: "listarTemplatesUsuario"
+},
+{
+    method: "get",
+    route: "/template/obter-status-usuario",
+    controller: TemplateController,
+    action: "obterStatusTemplate"
 }
+
 ]; 
