@@ -24,6 +24,10 @@ export class Uploads {
     @Column("varchar", { length: 20 })
     criadopor: string
 
+    //aprovado / pendente / negado
+    @Column("varchar", { length: 20 })
+    status: string
+
     @Column("int")
     usuarioId?: number
 

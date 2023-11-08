@@ -271,11 +271,53 @@ export class TemplateController {
                 await this.colunasRepository.save(colunasDatabase);
             }
             
+            let urlTemplate = '';
 
-            return response.status(201).json({
-                 mensagem: 'Template editada com sucesso.', 
-                 status: 201 
+            const spawn = require('child_process').spawn;
+            const path = require('path'); 
+
+            //caminho para o script em py
+            const caminhoScript = path.join(__dirname, '../scripts/edit-template-file.py');
+
+                //spawn para iniciar um novo processo Python
+                const script = spawn('python', [caminhoScript, JSON.stringify(colunasNovas), templateDb.nome, templateDb.extensao]);
+
+                //tratamento 
+                script.stdout.on('data', async (data) => {
+                    console.log(`url do arquivo: ${data}`);
+                    let text = data.toString();
+
+                    let lines = text.split('\r')
+                    let last_line = lines[lines.length - 2]
+
+                    // atualizar com a URL do arquivo
+                    templateDb.caminho = last_line;
+                  
+                    try {
+                      await this.templatesRepository.save(templateDb);
+                  
+                      return response.status(201).json({
+                        mensagem: 'Template editada com sucesso.', 
+                        status: 201 
+                       });
+                    } catch (error) {
+                      console.error('Erro ao salvar a URL do template:', error);
+                  
+                      // Retorne uma resposta de erro mais detalhada
+                      return response.status(500).json({ mensagem: 'Erro ao criar template: ' + error.message, status: 500 });
+                    }
+                  });
+
+                script.stderr.on('data', (data) => {
+                  console.log(`erro: ${data}`);
+
                 });
+
+                script.on('close', (code) => {
+                  console.log(`python finalizou com código:  ${code}`);
+                });
+
+            
         
 
         } catch (error) {

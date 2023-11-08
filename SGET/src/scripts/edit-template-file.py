@@ -17,6 +17,7 @@ colunas = json.loads(jsonColunas, object_hook=lambda d: SimpleNamespace(**d))
 nomeArquivo = nomeTemplate + '.' + tipoTemplate.lower()
 
 for coluna in colunas:
+    
     df[coluna.nome] = None
     
     if(tipoTemplate.lower() == 'csv'):
