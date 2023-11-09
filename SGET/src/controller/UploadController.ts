@@ -24,6 +24,79 @@ export class UploadsController {
          });
     }
 
+    async listarArquivosParaDashboard(request: Request, response: Response, next: NextFunction) {
+        let uploads = await this.uploadsRepository
+              .createQueryBuilder('uploads')
+              .leftJoinAndSelect('uploads.template', 'template')
+              .where('uploads.templateId = template.id')
+              .getMany();
+
+        console.log(uploads);
+
+        const spawn = require('child_process').spawn;
+        const path = require('path'); 
+
+        //caminho para o script em py
+        const caminhoScript = path.join(__dirname, '../scripts/get-file-lines.py');
+
+            //spawn para iniciar um novo processo Python
+            let jsonUploads = JSON.stringify(uploads);
+            const script = spawn('python', [caminhoScript, jsonUploads ]);
+
+
+            script.stdout.on('data', async (data) => {
+                //uploads com a propriedade qtdLinhas preenchida,
+                //o python retorna como JSON então converto de volta pra objeto
+
+                //filtrar apenas o json na mensagem de retorno
+                const regex = /\[\{.*?\}\]/s;
+                let result = data.toString();
+                const match = result.match(regex);
+
+                if (match) {
+                    const jsonString = match[0];
+                    uploads = JSON.parse(jsonString);
+                } 
+              });
+
+            script.stderr.on('data', (data) => {
+              console.log(`erro: ${data}`);
+            });
+
+            script.on('close', async (code) => {
+              console.log(`python finalizou com código:  ${code}`);
+             
+              return response.status(200).send({
+                mensagem: 'Uploads obtidos com sucesso.',
+                status: 200,
+                uploads: uploads
+             });
+            });
+    }
+
+    async listarArquivosUsuario(request: Request, response: Response, next: NextFunction){
+        //pegar id do usuário logado
+        //vem pela url quando é get = em obter template
+        const idUsuario = request.query.id;
+
+        const arquivosDoUsuario = await this.uploadsRepository.find({
+            where: {
+              usuarioId: idUsuario,
+            },
+          });
+
+          return response.status(200).json({
+            mensagem: 'Arquivos encontrados com sucesso.', 
+            uploads: arquivosDoUsuario,
+
+            status: 200 
+           });
+   
+        } catch (error) {
+        
+            console.error('Erro ao encontrar arquivos.', error);
+        }
+
     async alterarStatusArquivo(request: Request, response: Response, next: NextFunction) {
         try{
 

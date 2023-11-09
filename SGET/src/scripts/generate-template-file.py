@@ -24,7 +24,7 @@ for coluna in colunas:
     else:
         df.to_excel(nomeArquivo)
     #CSV E XLSX - OK
-    # FALTA XLS
+    # TESTE XLS
     
 gauth = GoogleAuth()
 GoogleAuth.DEFAULT_SETTINGS['client_config_file'] = 'src/scripts/client_secrets.json'

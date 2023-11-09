@@ -49,4 +49,21 @@ export const routesUploads = [{
     controller: UploadsController,
     //método que o servidor vai executar para gerar a resposta ao cliente
     action: "alterarStatusArquivo"
-}]
+},
+{
+    method: "get",
+    route: "/upload/obter-arquivos-usuario",
+    //classe que o servidor deve procurar 
+    controller: UploadsController,
+    //método que o servidor vai executar para gerar a resposta ao cliente
+    action: "listarArquivosUsuario"
+},
+{
+    method: "get",
+    route: "/upload/obter-dados-dashboard",
+    //classe que o servidor deve procurar 
+    controller: UploadsController,
+    //método que o servidor vai executar para gerar a resposta ao cliente
+    action: "listarArquivosParaDashboard"
+}
+]
